@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function CartPage() {
@@ -11,19 +12,13 @@ export default function CartPage() {
     discountCode,
     applyDiscountCode,
     getTotalPrice,
-    discounts,
   } = useCart();
 
-  const [couponInput, setCouponInput] = useState(discountCode || "");
+  const [coupon, setCoupon] = useState(discountCode || "");
 
   function handleApplyCoupon() {
-    const valid = discounts.find((d) => d.code === couponInput);
-    if (valid) {
-      applyDiscountCode(couponInput);
-      alert(`Coupon ${couponInput} applied!`);
-    } else {
-      alert("Invalid coupon code.");
-    }
+    // This doesn't do immediate validation, but the final total checks if code is valid from discounts array
+    applyDiscountCode(coupon);
   }
 
   const total = getTotalPrice().toFixed(2);
@@ -31,28 +26,32 @@ export default function CartPage() {
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-      {cartItems.length === 0 && <p>Your cart is empty.</p>}
+      {cartItems.length === 0 && (
+        <p>
+          Your cart is empty. <Link href="/">Go Shop</Link>
+        </p>
+      )}
 
-      {cartItems.map((item) => (
-        <div key={item.product.id} className="border-b mb-4 pb-4">
-          <h2 className="font-semibold">{item.product.name}</h2>
-          <p>Price: ${item.product.price.toFixed(2)}</p>
+      {cartItems.map(({ product, quantity }) => (
+        <div key={product.id} className="border-b mb-4 pb-4">
+          <h2 className="font-semibold">{product.name}</h2>
+          <p>Price: ${product.price.toFixed(2)}</p>
           <label className="block my-1">
             Quantity:
             <input
-              className="ml-2 border p-1 w-16"
               type="number"
-              min="1"
-              max={item.product.stock}
-              value={item.quantity}
+              className="ml-2 border p-1 w-16 text-black"
+              value={quantity}
+              min={1}
+              max={product.stock}
               onChange={(e) =>
-                updateQuantity(item.product.id, Number(e.target.value))
+                updateQuantity(product.id, Number(e.target.value))
               }
             />
           </label>
           <button
-            onClick={() => removeItem(item.product.id)}
-            className="bg-red-500 text-white px-2 py-1 rounded"
+            onClick={() => removeItem(product.id)}
+            className="mt-1 bg-red-500 text-white px-2 py-1 rounded"
           >
             Remove
           </button>
@@ -61,29 +60,28 @@ export default function CartPage() {
 
       {cartItems.length > 0 && (
         <>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-1 flex-wrap">
             <input
               type="text"
               placeholder="Enter coupon code"
-              className="border p-1 mr-2"
-              value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value)}
+              className="border p-1 text-black"
+              value={coupon}
+              onChange={(e) => setCoupon(e.target.value)}
             />
             <button
               onClick={handleApplyCoupon}
               className="bg-blue-600 text-white px-2 py-1 rounded"
             >
-              Apply
+              Apply Coupon
             </button>
           </div>
-          <h2 className="mt-4 text-xl">
-            Total: <span className="font-bold">${total}</span>
-          </h2>
-          <a href="/cart/checkout">
+          <h2 className="mt-4 text-xl font-semibold">Total: ${total}</h2>
+
+          <Link href="/cart/checkout">
             <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded">
               Proceed to Checkout
             </button>
-          </a>
+          </Link>
         </>
       )}
     </main>
