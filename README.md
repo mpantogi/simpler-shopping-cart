@@ -11,7 +11,6 @@ A **Next.js** shopping cart application that interacts with a Dockerized REST AP
 - [Setup & Installation](#setup--installation)
 - [Running the API](#running-the-api)
 - [Running the App](#running-the-app)
-- [Project Structure](#project-structure)
 - [Environment Variables](#environment-variables)
 
 ---
@@ -128,44 +127,6 @@ npm run dev
 This serves the app at `http://localhost:3000`.
 
 Open `http://localhost:3000` in your browser. You should now see the product listing page. From there, you can test adding products to the cart, applying coupons, and checking out.
-
----
-
-## Project Structure
-
-Here’s an example directory layout:
-
-```plaintext
-simpler-shopping-cart/
-├─ src/
-│  ├─ app/
-│  │  ├─ layout.js              # Global layout (includes CartProvider)
-│  │  ├─ page.js                # Main page (Home / Product listing)
-│  │  ├─ cart/
-│  │  │  ├─ page.js             # Cart overview
-│  │  │  └─ checkout/
-│  │  │     ├─ page.js          # Checkout page
-│  │  │     └─ success/
-│  │  │        └─ page.js       # Order success page
-│  │  └─ globals.css            # Tailwind + global styles
-│  ├─ components/
-│  │  ├─ ProductCard.js
-│  │  └─ ProductList.js
-│  ├─ context/
-│  │  └─ CartContext.js         # Cart context & state
-│  ├─ services/
-│  │  └─ api.js                 # API calls (fetch products, discounts, etc.)
-│  └─ utils/
-│     └─ rounding.js            # Banker's rounding utility
-├─ .env.local
-├─ .gitignore
-├─ package.json
-├─ tailwind.config.js
-├─ postcss.config.js
-└─ README.md
-```
-
-You can adapt naming conventions and file placements as you see fit.
 
 ---
 

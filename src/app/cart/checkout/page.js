@@ -2,8 +2,9 @@
 
 import { useCart } from "@/context/CartContext";
 import { postOrder } from "@/services/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -11,14 +12,12 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // If cart is empty, redirect to /cart
-  useEffect(() => {
-    if (cartItems.length === 0) {
-      router.push("/cart");
-    }
-  }, [cartItems, router]);
+  const total = getTotalPrice().toFixed(2);
+  const isCartEmpty = cartItems.length === 0;
 
   async function handlePlaceOrder() {
+    if (isCartEmpty) return;
+
     setLoading(true);
     setError("");
 
@@ -45,11 +44,21 @@ export default function CheckoutPage() {
     }
   }
 
-  const total = getTotalPrice().toFixed(2);
+  if (isCartEmpty) {
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Checkout</h1>
+        <p>
+          Your cart is empty. <Link href="/">Go Shop</Link>
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Review &amp; Place Order</h1>
+
       {cartItems.map(({ product, quantity }) => (
         <div key={product.id} className="mb-4 border-b pb-2">
           <h2>{product.name}</h2>
@@ -63,8 +72,12 @@ export default function CheckoutPage() {
 
       <button
         onClick={handlePlaceOrder}
-        disabled={loading}
-        className="mt-4 bg-green-700 text-white px-4 py-2 rounded"
+        disabled={loading || isCartEmpty}
+        className={`mt-4 px-4 py-2 rounded text-white ${
+          loading || isCartEmpty
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-green-700"
+        }`}
       >
         {loading ? "Placing Order..." : "Place Order"}
       </button>
