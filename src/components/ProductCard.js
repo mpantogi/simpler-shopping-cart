@@ -4,8 +4,13 @@ import { useCart } from "@/context/CartContext";
 
 export default function ProductCard({ product, onAddToCart }) {
   const { cartItems } = useCart();
-  const cartItem = cartItems.find((ci) => ci.product.id === product.id);
+
+  // Because cart items store { product_id, quantity, productData },
+  // we find the item by matching product_id to product.id
+  const cartItem = cartItems.find((ci) => ci.product_id === product.id);
   const alreadyInCart = cartItem ? cartItem.quantity : 0;
+
+  // If the user already has quantity >= product.stock, disable adding
   const isAtStockLimit = alreadyInCart >= product.stock;
   const buttonText = isAtStockLimit ? "Out of Stock" : "Add to Cart";
 

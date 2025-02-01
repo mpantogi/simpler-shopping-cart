@@ -21,9 +21,12 @@ export default function NavBar() {
   return (
     <header className="bg-gray-100 p-4">
       <div className="flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-black">
+        <button
+          className="text-xl font-bold text-black"
+          onClick={() => window.location.assign("/")}
+        >
           Simpler Shopping Cart
-        </Link>
+        </button>
 
         {/* Hamburger button on small screens */}
         <button

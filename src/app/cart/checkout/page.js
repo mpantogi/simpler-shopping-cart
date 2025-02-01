@@ -8,37 +8,28 @@ import { useState } from "react";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartItems, discountCode, getTotalPrice } = useCart();
+  const { cartId, cartItems, discountCode, getTotalPrice } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const total = getTotalPrice().toFixed(2);
-  const isCartEmpty = cartItems.length === 0;
+  const isCartEmpty = !cartId || cartItems.length === 0;
 
   async function handlePlaceOrder() {
-    if (isCartEmpty) return;
+    if (isCartEmpty) {
+      setError("Cart is empty or missing ID.");
+      return;
+    }
 
     setLoading(true);
     setError("");
-
     try {
-      const orderData = {
-        items: cartItems.map((ci) => ({
-          productId: ci.product.id,
-          quantity: ci.quantity,
-        })),
-        discountCode: discountCode || undefined,
-      };
-
-      const res = await postOrder(orderData);
-      if (res.success) {
-        router.push(`/cart/checkout/success?orderId=${res.orderId}`);
-      } else {
-        setError("Failed to place order. No success from API.");
-      }
+      const orderId = await postOrder({ cartId, discountCode });
+      // We can redirect to a success page with that ID
+      router.push(`/cart/checkout/success?orderId=${orderId}`);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Order failed");
+      setError(err.message || "Order failed.");
     } finally {
       setLoading(false);
     }
@@ -58,12 +49,11 @@ export default function CheckoutPage() {
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Review &amp; Place Order</h1>
-
-      {cartItems.map(({ product, quantity }) => (
-        <div key={product.id} className="mb-4 border-b pb-2">
-          <h2>{product.name}</h2>
+      {cartItems.map(({ product_id, productData, quantity }) => (
+        <div key={product_id} className="mb-4 border-b pb-2">
+          <h2>{productData?.name ?? "Unknown"}</h2>
           <p>Qty: {quantity}</p>
-          <p>Subtotal: ${(product.price * quantity).toFixed(2)}</p>
+          <p>Subtotal: ${(productData?.price ?? 0 * quantity).toFixed(2)}</p>
         </div>
       ))}
 
@@ -71,13 +61,9 @@ export default function CheckoutPage() {
       {error && <p className="text-red-600 mt-2">{error}</p>}
 
       <button
+        disabled={loading}
         onClick={handlePlaceOrder}
-        disabled={loading || isCartEmpty}
-        className={`mt-4 px-4 py-2 rounded text-white ${
-          loading || isCartEmpty
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-green-700"
-        }`}
+        className="mt-4 px-4 py-2 bg-green-600 text-white rounded"
       >
         {loading ? "Placing Order..." : "Place Order"}
       </button>
