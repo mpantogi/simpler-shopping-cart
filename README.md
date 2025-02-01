@@ -1,6 +1,6 @@
 # simpler-shopping-cart
 
-A **Next.js** (Node 21) shopping cart application to demonstrate adding products to cart, applying discounts, and submitting an order to a provided Dockerized API.
+A **Next.js** shopping cart application that interacts with a Dockerized REST API. Users can browse products, add items to a cart, apply discounts, and place orders with real-time totals.
 
 ## Table of Contents
 
@@ -13,56 +13,169 @@ A **Next.js** (Node 21) shopping cart application to demonstrate adding products
 - [Running the App](#running-the-app)
 - [Project Structure](#project-structure)
 - [Environment Variables](#environment-variables)
-- [License](#license)
 
 ---
 
 ## Overview
 
-`simpler-shopping-cart` is a take-home assignment demonstrating how to build a basic e-commerce cart with React (Next.js). It interacts with a Dockerized REST API that provides product, discount, and order endpoints.
+`simpler-shopping-cart` is a take-home exercise demonstrating a basic e-commerce flow:
 
-**Key functionality**:
+- Viewing products (fetched from a remote API)
+- Managing a local cart in React
+- Applying discount codes
+- Submitting an order to the server
+- Displaying an order success screen
 
-- Browse products
-- Add products to a cart (respecting stock limits)
-- Apply discount codes
-- View real-time total cost
-- Submit the cart to place an order
-- See an order success screen
+The project uses **Next.js 13** (App Router) and **Tailwind CSS** for styling, with a **Node.js 21** environment.
 
 ---
 
 ## Features
 
-- **Real-time cart updates**: Using React state (Context) to manage items, quantities, and discounts.
-- **Coupon/discount support**: Users can apply a coupon code validated against the API’s `/discounts`.
-- **Simple checkout flow**: User sees a total cost, then POSTs the cart to `/orders`.
-- **Banker’s rounding**: Handles rounding half-to-even for currency calculations.
+1. **Add to Cart**: Dynamically add items, respecting stock limits.
+2. **Remove/Update Items**: Quickly modify quantities or remove products.
+3. **Apply Coupon**: Discounts validated against the API’s `/discounts` endpoint.
+4. **Real-time Totals**: Displays updated cart totals after each change.
+5. **Checkout**: Submits the cart to the `/orders` endpoint and shows a success screen.
 
 ---
 
 ## Tech Stack
 
-- **Node.js 21**
-- **Next.js 13** (App Router)
+- **Node.js** (v21+)
+- **Next.js** (13, using the App Router)
 - **React** (built-in with Next.js)
-- **Tailwind CSS** for styling
-- **Dockerized API** (fetched from `registry.gitlab.com/saysimpler/hiring/fe-sample-api`)
+- **Tailwind CSS** (for utility-first styling)
+- **Docker** (for the external API)
 
 ---
 
 ## Prerequisites
 
-1. **Node.js 21** (or higher)
-2. **npm** or **yarn** for installing dependencies
-3. **Docker** (to run the provided API)
+1. **Node.js 21** (or higher).
+2. **npm** (comes with Node).
+3. **Docker** (to run the provided API container).
 
 ---
 
 ## Setup & Installation
 
-1. **Clone** the repository:
+1. **Clone** or download the repository:
    ```bash
-   git clone <your-repo-url> simpler-shopping-cart
+   git clone <YOUR-REPO-URL> simpler-shopping-cart
    cd simpler-shopping-cart
    ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+   This installs Next.js, Tailwind, and other required packages.
+
+---
+
+## Running the API
+
+An API has been provided as a Docker image:
+
+```bash
+registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
+```
+
+### Apple Silicon (M1/M2)
+
+If you are on Apple Silicon, add the `--platform=linux/amd64` flag to avoid architecture mismatch:
+
+```bash
+docker pull registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
+
+docker run --rm -p 3001:3001 --platform=linux/amd64 \
+  registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
+```
+
+### x86 / Intel
+
+If not on Apple Silicon, simply:
+
+```bash
+docker pull registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
+
+docker run --rm -p 3001:3001 \
+  registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
+```
+
+The API should now be running at `http://localhost:3001`.
+
+You can visit `http://localhost:3001/blueprint` to see all available routes (e.g., `/products`, `/discounts`, `/orders`, etc.).
+
+---
+
+## Running the App
+
+Create `.env.local` in the project root if not already present:
+
+```ini
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+```
+
+Adjust this port/URL if you run Docker on a different port.
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+This serves the app at `http://localhost:3000`.
+
+Open `http://localhost:3000` in your browser. You should now see the product listing page. From there, you can test adding products to the cart, applying coupons, and checking out.
+
+---
+
+## Project Structure
+
+Here’s an example directory layout:
+
+```plaintext
+simpler-shopping-cart/
+├─ src/
+│  ├─ app/
+│  │  ├─ layout.js              # Global layout (includes CartProvider)
+│  │  ├─ page.js                # Main page (Home / Product listing)
+│  │  ├─ cart/
+│  │  │  ├─ page.js             # Cart overview
+│  │  │  └─ checkout/
+│  │  │     ├─ page.js          # Checkout page
+│  │  │     └─ success/
+│  │  │        └─ page.js       # Order success page
+│  │  └─ globals.css            # Tailwind + global styles
+│  ├─ components/
+│  │  ├─ ProductCard.js
+│  │  └─ ProductList.js
+│  ├─ context/
+│  │  └─ CartContext.js         # Cart context & state
+│  ├─ services/
+│  │  └─ api.js                 # API calls (fetch products, discounts, etc.)
+│  └─ utils/
+│     └─ rounding.js            # Banker's rounding utility
+├─ .env.local
+├─ .gitignore
+├─ package.json
+├─ tailwind.config.js
+├─ postcss.config.js
+└─ README.md
+```
+
+You can adapt naming conventions and file placements as you see fit.
+
+---
+
+## Environment Variables
+
+`NEXT_PUBLIC_API_BASE_URL`: The base URL where your Dockerized API is running.
+Defaults to `http://localhost:3001` if not set in `.env.local`.
+
+```ini
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+```
+
+That’s it! You should now have a complete overview of how to run the Dockerized API and the Next.js application locally. If you are on Apple Silicon, remember to include the `--platform=linux/amd64` flag when running the Docker image to avoid the architecture mismatch. Happy coding!
