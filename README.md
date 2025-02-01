@@ -88,7 +88,7 @@ If you are on Apple Silicon, add the `--platform=linux/amd64` flag to avoid arch
 ```bash
 docker pull registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
 
-docker run --rm -p 3001:3001 --platform=linux/amd64 \
+docker run --rm -p 3001:8080 --platform=linux/amd64 \
   registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
 ```
 
@@ -99,7 +99,7 @@ If not on Apple Silicon, simply:
 ```bash
 docker pull registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
 
-docker run --rm -p 3001:3001 \
+docker run --rm -p 3001:8080 \
   registry.gitlab.com/saysimpler/hiring/fe-sample-api:latest
 ```
 

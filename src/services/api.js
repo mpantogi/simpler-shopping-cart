@@ -1,8 +1,10 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+const API_BASE_URL = "/api"; // Points to the rewrite, which proxies to Docker
 
 async function fetchAPI(endpoint, options = {}) {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log("Fetching via rewrite URL:", url);
+
+  const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
@@ -10,7 +12,6 @@ async function fetchAPI(endpoint, options = {}) {
   if (!res.ok) {
     throw new Error(`Request failed with status ${res.status}`);
   }
-
   return res.json();
 }
 
