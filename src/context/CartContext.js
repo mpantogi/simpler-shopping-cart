@@ -11,20 +11,93 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartId, setCartId] = useState(null);
-  /**
-   * We'll store each item as:
-   *   { product_id, quantity, productData?: {id, name, price, stock} }
-   */
   const [cartItems, setCartItems] = useState([]);
   const [discountCode, setDiscountCode] = useState(null);
   const [discounts, setDiscounts] = useState([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
-  /** Re-fetch the cart from the server (GET /carts/{id}) */
+  /** Load cartId & cartItems from localStorage on first render */
+  useEffect(() => {
+    const savedId = localStorage.getItem("cartId");
+    const savedCart = localStorage.getItem("cartItems");
+    const savedDiscount = localStorage.getItem("discountCode");
+
+    if (savedId) setCartId(savedId);
+    if (savedCart) setCartItems(JSON.parse(savedCart));
+    if (savedDiscount) setDiscountCode(savedDiscount);
+    setCartLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (cartLoaded && cartItems.length === 0) {
+      setDiscountCode(null);
+      localStorage.removeItem("discountCode");
+    }
+  }, [cartLoaded, cartItems]);
+
+  useEffect(() => {
+    if (cartId) {
+      localStorage.setItem("cartId", cartId);
+      fetchAndSetCart(cartId);
+    }
+  }, [cartId]);
+
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (discountCode) {
+      localStorage.setItem("discountCode", discountCode);
+    } else {
+      localStorage.removeItem("discountCode");
+    }
+  }, [discountCode]);
+
+  useEffect(() => {
+    if (cartId) {
+      syncCartToServer(cartItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems]);
+
+  const getSubtotal = useMemo(() => {
+    return () => {
+      return cartItems.reduce((acc, ci) => {
+        const price = ci.productData?.price ?? 0;
+        return acc + price * ci.quantity;
+      }, 0);
+    };
+  }, [cartItems]);
+
+  const getTotalPrice = useMemo(() => {
+    return () => {
+      let subtotal = getSubtotal();
+      if (discountCode) {
+        const disc = discounts.find((d) => d.code === discountCode);
+        if (disc) {
+          if (disc.type === "FLAT") {
+            subtotal = Math.max(0, subtotal - disc.amount);
+          } else if (disc.type === "PERCENTAGE") {
+            subtotal = subtotal * (1 - disc.amount / 100);
+          } else if (disc.type === "BOGO") {
+            let discountAmount = 0;
+            cartItems.forEach(({ quantity, productData }) => {
+              const freeUnits = Math.floor(quantity / 2);
+              discountAmount += (productData?.price ?? 0) * freeUnits;
+            });
+            subtotal -= discountAmount;
+          }
+        }
+      }
+      return bankersRound(subtotal, 2);
+    };
+  }, [cartItems, discountCode, discounts, getSubtotal]);
+
+  /** Fetch the cart from the server and merge with local data */
   async function fetchAndSetCart(id) {
     try {
       const cart = await getServerCart(id);
-      // cart => { id: "xyz", items: [ { product_id, quantity }, ... ] }
-      // Merge each server item with local productData if we have it
       setCartItems((prev) => {
         return cart.items.map((si) => {
           const existing = prev.find((ci) => ci.product_id === si.product_id);
@@ -49,10 +122,9 @@ export function CartProvider({ children }) {
   async function ensureServerCart() {
     if (cartId) return cartId;
     try {
-      const cart = await createCartOnServer(); // => { id, items: [...] }
+      const cart = await createCartOnServer();
       if (cart?.id) {
         setCartId(cart.id);
-        // store items from server
         setCartItems(
           cart.items.map((si) => ({
             product_id: si.product_id,
@@ -86,11 +158,7 @@ export function CartProvider({ children }) {
         quantity: ci.quantity,
       }));
       const updatedCart = await updateServerCart(cartId, arrayOfItems);
-      // updatedCart => { id, items: [ { product_id, quantity }, ... ] }
-
-      // Compare with current local items
       setCartItems((prev) => {
-        // Build array for the server's result
         const newItems = updatedCart.items.map((si) => {
           const ex = prev.find((p) => p.product_id === si.product_id);
           return {
@@ -105,9 +173,8 @@ export function CartProvider({ children }) {
           };
         });
 
-        // If newItems is effectively the same as prev, skip updating to avoid re-render loops
         if (areArraysEqual(prev, newItems)) {
-          return prev; // no change, no re-render
+          return prev;
         }
         return newItems;
       });
@@ -116,9 +183,7 @@ export function CartProvider({ children }) {
     }
   }
 
-  // Add an item to local cart
   async function addItem(product) {
-    // ensure we have a cart
     const id = await ensureServerCart();
     if (!id) return;
 
@@ -151,12 +216,10 @@ export function CartProvider({ children }) {
     });
   }
 
-  // Remove an item
   function removeItem(productId) {
     setCartItems((prev) => prev.filter((ci) => ci.product_id !== productId));
   }
 
-  // Update quantity
   function updateQuantity(productId, newQty) {
     setCartItems((prev) =>
       prev.map((ci) =>
@@ -167,49 +230,14 @@ export function CartProvider({ children }) {
 
   function applyDiscountCode(code) {
     setDiscountCode(code || null);
+    if (code) {
+      localStorage.setItem("discountCode", code);
+    } else {
+      localStorage.removeItem("discountCode");
+    }
   }
 
-  // On each local cart update, sync to server
-  useEffect(() => {
-    if (cartId) {
-      syncCartToServer(cartItems);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems]);
-
-  /** Compute local total using productData.price, discount logic, etc. */
-  const getTotalPrice = useMemo(() => {
-    return () => {
-      let subtotal = 0;
-      cartItems.forEach((ci) => {
-        const price = ci.productData?.price ?? 0;
-        subtotal += price * ci.quantity;
-      });
-      if (discountCode) {
-        const disc = discounts.find((d) => d.code === discountCode);
-        if (disc) {
-          if (disc.type === "FLAT") {
-            let newTotal = subtotal - disc.amount;
-            if (newTotal < 0) newTotal = 0;
-            subtotal = newTotal;
-          } else if (disc.type === "PERCENTAGE") {
-            subtotal = subtotal * (1 - disc.amount / 100);
-          } else if (disc.type === "BOGO") {
-            let discountAmount = 0;
-            cartItems.forEach(({ quantity, productData }) => {
-              const freeUnits = Math.floor(quantity / 2);
-              discountAmount += (productData?.price ?? 0) * freeUnits;
-            });
-            subtotal -= discountAmount;
-          }
-        }
-      }
-      return bankersRound(subtotal, 2);
-    };
-  }, [cartItems, discountCode, discounts]);
-
-  /** Simple deep compare of cart item arrays, checking product_id & quantity. 
-    You could do fancier logic or a JSON.stringify compare. */
+  // Simple deep compare of cart item arrays, checking product_id & quantity.
   function areArraysEqual(oldItems, newItems) {
     if (oldItems.length !== newItems.length) return false;
     for (let i = 0; i < oldItems.length; i++) {
@@ -236,6 +264,7 @@ export function CartProvider({ children }) {
         updateQuantity,
         applyDiscountCode,
         getTotalPrice,
+        getSubtotal,
       }}
     >
       {children}

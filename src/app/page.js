@@ -2,24 +2,18 @@
 
 import ProductList from "@/components/ProductList";
 import { useCart } from "@/context/CartContext";
-import { getDiscounts, getProducts } from "@/services/api";
+import { getProducts } from "@/services/api";
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
-  const { addItem, setDiscounts } = useCart();
+  const { addItem } = useCart();
 
   useEffect(() => {
-    // Fetch products
     getProducts()
       .then((data) => setProducts(data))
       .catch(console.error);
-
-    // Fetch discounts
-    getDiscounts()
-      .then((disc) => setDiscounts(disc))
-      .catch(console.error);
-  }, [setDiscounts]);
+  }, []);
 
   return (
     <main className="p-4 sm:p-8">

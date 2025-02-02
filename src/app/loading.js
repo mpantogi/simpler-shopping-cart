@@ -1,12 +1,8 @@
 export default function Loading() {
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold mb-4">Loading Products...</h1>
-      <div className="flex gap-4">
-        <div className="w-40 h-40 bg-gray-200 animate-pulse" />
-        <div className="w-40 h-40 bg-gray-200 animate-pulse" />
-        <div className="w-40 h-40 bg-gray-200 animate-pulse" />
-      </div>
+    <main className="flex flex-col items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+      <h1 className="text-2xl font-semibold">Loading...</h1>
     </main>
   );
 }
