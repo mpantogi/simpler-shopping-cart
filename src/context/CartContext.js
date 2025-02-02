@@ -222,9 +222,13 @@ export function CartProvider({ children }) {
 
   function updateQuantity(productId, newQty) {
     setCartItems((prev) =>
-      prev.map((ci) =>
-        ci.product_id === productId ? { ...ci, quantity: newQty } : ci
-      )
+      prev.map((ci) => {
+        if (ci.product_id === productId) {
+          const safeQty = Math.min(newQty, ci.productData.stock);
+          return { ...ci, quantity: safeQty };
+        }
+        return ci;
+      })
     );
   }
 

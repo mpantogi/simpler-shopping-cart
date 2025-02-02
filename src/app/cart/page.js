@@ -120,7 +120,7 @@ export default function CartPage() {
             {hasDiscount ? (
               <p>
                 Subtotal: <s>${subtotalValue}</s>
-                <span className="text-green-600 font-semibold">
+                <span className="text-green-600 font-semibold ml-1">
                   ${discountedValue}
                 </span>
               </p>

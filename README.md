@@ -11,6 +11,7 @@ A **Next.js** shopping cart application that interacts with a Dockerized REST AP
 - [Setup & Installation](#setup--installation)
 - [Running the API](#running-the-api)
 - [Running the App](#running-the-app)
+- [Testing](#testing)
 - [Environment Variables](#environment-variables)
 
 ---
@@ -130,10 +131,19 @@ Open `http://localhost:3000` in your browser. You should now see the product lis
 
 ---
 
+## Testing
+
+Run tests with:
+
+```bash
+npm test
+```
+
+---
+
 ## Environment Variables
 
-`NEXT_PUBLIC_API_BASE_URL`: The base URL where your Dockerized API is running.
-Defaults to `http://localhost:3001` if not set in `.env.local`.
+Run tests with:
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
