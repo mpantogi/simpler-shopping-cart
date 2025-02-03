@@ -1,15 +1,24 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { postOrder } from "@/services/api";
+import { getDiscounts, postOrder } from "@/services/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cartId, cartItems, discountCode, getTotalPrice, getSubtotal } =
-    useCart();
+  const {
+    cartId,
+    cartItems,
+    discountCode,
+    getTotalPrice,
+    getSubtotal,
+    setDiscounts,
+    setCartId,
+    setCartItems,
+    setDiscountCode,
+  } = useCart();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +27,12 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   }, [cartItems]);
+
+  useEffect(() => {
+    getDiscounts()
+      .then((disc) => setDiscounts(disc))
+      .catch(console.error);
+  }, [setDiscounts]);
 
   const isCartEmpty = !cartId || cartItems.length === 0;
   const subtotalValue = getSubtotal().toFixed(2);
@@ -33,6 +48,15 @@ export default function CheckoutPage() {
     setError("");
     try {
       const orderId = await postOrder({ cartId, discountCode });
+      // Clear local storage
+      localStorage.removeItem("cartId");
+      localStorage.removeItem("cartItems");
+      localStorage.removeItem("discountCode");
+
+      // 3) Also clear context state
+      setCartId(null);
+      setCartItems([]);
+      setDiscountCode(null);
       router.push(`/cart/checkout/success?orderId=${orderId}`);
     } catch (err) {
       console.error(err);

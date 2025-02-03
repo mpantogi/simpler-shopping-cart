@@ -1,5 +1,11 @@
 "use client";
 
+// Currently, this success page is a very basic static UI.
+// We do NOT call `GET /orders/{id}` to retrieve final order data,
+// because of time constraints. Instead, we simply display the
+// order ID (passed via URL) and a confirmation message.
+// TODO: change this to fetch and display the order details dynamically.
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 

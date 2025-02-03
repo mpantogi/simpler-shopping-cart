@@ -1,9 +1,6 @@
 "use client";
-import {
-  createCartOnServer,
-  getServerCart,
-  updateServerCart,
-} from "@/services/api";
+
+import { createCartOnServer, updateServerCart } from "@/services/api";
 import { bankersRound } from "@/utils/rounding";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
@@ -16,7 +13,6 @@ export function CartProvider({ children }) {
   const [discounts, setDiscounts] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
 
-  /** Load cartId & cartItems from localStorage on first render */
   useEffect(() => {
     const savedId = localStorage.getItem("cartId");
     const savedCart = localStorage.getItem("cartItems");
@@ -25,6 +21,7 @@ export function CartProvider({ children }) {
     if (savedId) setCartId(savedId);
     if (savedCart) setCartItems(JSON.parse(savedCart));
     if (savedDiscount) setDiscountCode(savedDiscount);
+
     setCartLoaded(true);
   }, []);
 
@@ -38,7 +35,6 @@ export function CartProvider({ children }) {
   useEffect(() => {
     if (cartId) {
       localStorage.setItem("cartId", cartId);
-      fetchAndSetCart(cartId);
     }
   }, [cartId]);
 
@@ -94,31 +90,6 @@ export function CartProvider({ children }) {
     };
   }, [cartItems, discountCode, discounts, getSubtotal]);
 
-  /** Fetch the cart from the server and merge with local data */
-  async function fetchAndSetCart(id) {
-    try {
-      const cart = await getServerCart(id);
-      setCartItems((prev) => {
-        return cart.items.map((si) => {
-          const existing = prev.find((ci) => ci.product_id === si.product_id);
-          return {
-            product_id: si.product_id,
-            quantity: si.quantity,
-            productData: existing?.productData || {
-              id: si.product_id,
-              name: "Unknown",
-              price: 0,
-              stock: 99,
-            },
-          };
-        });
-      });
-    } catch (err) {
-      console.error("Failed to fetch server cart:", err);
-    }
-  }
-
-  /** Ensure we have a cart ID by calling POST /carts if needed */
   async function ensureServerCart() {
     if (cartId) return cartId;
     try {
@@ -145,11 +116,6 @@ export function CartProvider({ children }) {
     return null;
   }
 
-  /**
-   * Every time our local cart changes, do:
-   * PUT /carts/{id} with an array of items => [ { product_id, quantity }, ... ]
-   * Then store the returned cart's items in local state, so we stay in sync
-   */
   async function syncCartToServer(items) {
     if (!cartId) return;
     try {
@@ -157,7 +123,9 @@ export function CartProvider({ children }) {
         product_id: ci.product_id,
         quantity: ci.quantity,
       }));
+
       const updatedCart = await updateServerCart(cartId, arrayOfItems);
+
       setCartItems((prev) => {
         const newItems = updatedCart.items.map((si) => {
           const ex = prev.find((p) => p.product_id === si.product_id);
@@ -193,11 +161,7 @@ export function CartProvider({ children }) {
         if (existing.quantity < product.stock) {
           return prev.map((ci) =>
             ci.product_id === product.id
-              ? {
-                  ...ci,
-                  quantity: ci.quantity + 1,
-                  productData: product,
-                }
+              ? { ...ci, quantity: ci.quantity + 1, productData: product }
               : ci
           );
         } else {
@@ -241,7 +205,6 @@ export function CartProvider({ children }) {
     }
   }
 
-  // Simple deep compare of cart item arrays, checking product_id & quantity.
   function areArraysEqual(oldItems, newItems) {
     if (oldItems.length !== newItems.length) return false;
     for (let i = 0; i < oldItems.length; i++) {
@@ -259,8 +222,11 @@ export function CartProvider({ children }) {
     <CartContext.Provider
       value={{
         cartId,
+        setCartId,
         cartItems,
+        setCartItems,
         discountCode,
+        setDiscountCode,
         discounts,
         setDiscounts,
         addItem,
