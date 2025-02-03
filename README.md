@@ -18,7 +18,7 @@ A **Next.js** shopping cart application that interacts with a Dockerized REST AP
 
 ## Overview
 
-`simpler-shopping-cart` is a take-home exercise demonstrating a basic e-commerce flow:
+`simpler-shopping-cart` is a task demonstrating a basic e-commerce flow:
 
 - Viewing products (fetched from a remote API)
 - Managing a local cart in React
