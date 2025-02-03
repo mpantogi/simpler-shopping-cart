@@ -21,6 +21,13 @@ async function fetchAPI(endpoint, options = {}) {
   });
 
   if (!res.ok) {
+    if (res.status === 404) {
+      // Handle 404 error: Cart not found, so reset the cart
+      localStorage.removeItem("cartId");
+      localStorage.removeItem("cartItems");
+      localStorage.removeItem("discountCode");
+      throw new Error(`Cart not found (404). Cart reset.`);
+    }
     throw new Error(`Request failed with status ${res.status}`);
   }
 
